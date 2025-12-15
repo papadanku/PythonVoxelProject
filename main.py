@@ -22,6 +22,10 @@ class VoxelEngine:
         # Our window display settings.
         pg.display.set_mode(WIN_RES, flags=pg.OPENGL | pg.DOUBLEBUF)
 
+        # Prevent the mouse from displaying outside the border.
+        pg.event.set_grab(True)
+        pg.mouse.set_visible(False)
+
         # The VoxelEngine will have a context.
         self.ctx = mgl.create_context()
 
