@@ -47,6 +47,8 @@ class ChunkMesh(BaseMesh):
         """
         mesh = build_chunk_mesh(
             chunk_voxels=self.chunk.voxels,
-            format_size=self.format_size
+            format_size=self.format_size,
+            chunk_position=self.chunk.position,
+            world_voxels=self.chunk.world.voxels
         )
         return mesh

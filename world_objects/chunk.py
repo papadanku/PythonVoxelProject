@@ -6,22 +6,47 @@ class Chunk:
     """
     3D chunk class that manages a grid of voxels and their rendering.
 
-    The Chunk class represents a 3D grid of voxels (32×32×32) that forms
+    The Chunk class represents a 3D grid of voxels (32*32*32) that forms
     the basic building block of the voxel world. It handles voxel data
     generation, mesh creation, and rendering of the chunk.
     """
 
-    def __init__(self, engine):
+    def __init__(self, world, position):
         """
         Initialize the chunk with engine reference and generate voxel data.
 
         Args:
             engine: Reference to the main VoxelEngine instance
         """
-        self.engine = engine
-        self.voxels: np.array = self.build_voxels()
+        self.engine = world.engine
+        self.world = world
+        self.position = position
+        self.m_model = self.get_model_matrix()
+        self.voxels: np.array = None
         self.mesh: ChunkMesh = None
-        self.build_mesh()
+        self.is_empty = True
+
+    def get_model_matrix(self):
+        """
+        Calculate the model matrix for this chunk.
+
+        Creates a transformation matrix that positions the chunk
+        in world space based on its chunk coordinates.
+
+        Returns:
+            mat4: Model matrix that transforms chunk coordinates to world space
+        """
+        m_model = glm.translate(glm.mat4(), glm.vec3(self.position) * CHUNK_SIZE)
+        return m_model
+
+    def set_uniform(self):
+        """
+        Update shader uniforms for this chunk.
+
+        Writes the model matrix to the shader program so the chunk
+        can be rendered in the correct position in world space.
+        """
+        self.mesh.program['m_model'].write(self.m_model)
 
     def build_mesh(self):
         """
@@ -38,7 +63,9 @@ class Chunk:
 
         Delegates rendering to the chunk's mesh object.
         """
-        self.mesh.render()
+        if not self.is_empty:
+            self.set_uniform()
+            self.mesh.render()
 
     def build_voxels(self):
         """
@@ -56,11 +83,20 @@ class Chunk:
         voxels = np.zeros(CHUNK_VOLUME, dtype='uint8')
 
         # Fill chunk
+        cx, cy, cz = glm.ivec3(self.position) * CHUNK_SIZE
+
         for x in range(CHUNK_SIZE):
             for z in range(CHUNK_SIZE):
-                for y in range(CHUNK_SIZE):
-                    voxels[x + CHUNK_SIZE * z + CHUNK_AREA * y] = (
-                        x + y + z if int(glm.simplex(glm.vec3(x, y, z) * 0.1) + 1) else 0
-                    )
+                wx = x + cx
+                wz = z + cz
+                world_height = int(glm.simplex(glm.vec2(wx, wz) * 0.01) * 32 + 32)
+                local_height = min(world_height - cy, CHUNK_SIZE)
+
+                for y in range(local_height):
+                    wy = y + cy
+                    voxels[x + CHUNK_SIZE * z + CHUNK_AREA * y] = wy + 1
+
+        if np.any(voxels):
+            self.is_empty = False
 
         return voxels

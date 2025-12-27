@@ -1,6 +1,6 @@
 
 from settings import *
-from world_objects.chunk import Chunk
+from world import World
 
 class Scene:
     """
@@ -18,7 +18,7 @@ class Scene:
             engine: Reference to the main VoxelEngine instance
         """
         self.engine = engine
-        self.chunk = Chunk(self.engine)
+        self.world = World(self.engine)
 
     def update(self):
         """
@@ -27,13 +27,13 @@ class Scene:
         Currently a placeholder for future scene update logic.
         Will handle updates for multiple chunks and world objects.
         """
-        pass
+        self.world.update()
 
     def render(self):
         """
         Render all objects in the scene.
 
         Delegates rendering to all contained world objects,
-        currently just the single chunk.
+        currently just the single world.
         """
-        self.chunk.render()
+        self.world.render()

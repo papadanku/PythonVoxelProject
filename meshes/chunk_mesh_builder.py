@@ -1,26 +1,60 @@
 
 from settings import *
 
-
-def is_void(voxel_pos, chunk_voxels):
+def get_chunk_index(world_voxel_position):
     """
-    Check if a position in the chunk is empty (void).
+    Calculate the chunk index for a given world voxel position.
 
     Args:
-        voxel_pos: Tuple containing (x, y, z) position to check
-        chunk_voxels: Array containing voxel data for the chunk
+        world_voxel_position: Tuple containing (x, y, z) world coordinates
 
     Returns:
-        True if the position is empty or out of bounds, False if occupied
+        int: Index of the chunk containing the voxel, or -1 if out of bounds
 
-    This function determines if a voxel face should be rendered by checking
-    if the adjacent position is empty. Used for face culling optimization.
+    Converts world coordinates to chunk coordinates and calculates
+    the linear index in the chunks array. Returns -1 for positions
+    outside the valid world bounds.
     """
-    x, y, z = voxel_pos
+    wx, wy, wz = world_voxel_position
+    cx = wx // CHUNK_SIZE
+    cy = wy // CHUNK_SIZE
+    cz = wz // CHUNK_SIZE
 
-    if (0 <= x < CHUNK_SIZE) and (0 <= y < CHUNK_SIZE) and (0 <= z < CHUNK_SIZE):
-        if chunk_voxels[x + CHUNK_SIZE * z + CHUNK_AREA * y]:
-            return False
+    if not ((0 <= cx < WORLD_WIDTH) and (0 <= cy < WORLD_HEIGHT) and (0 <= cz < WORLD_DEPTH)):
+        return -1
+
+    index = cx + WORLD_WIDTH * cz + WORLD_AREA * cy
+    return index
+
+def is_void(local_voxel_position, world_voxel_position, world_voxels):
+    """
+    Check if a voxel position is empty (void) or contains a solid voxel.
+
+    Args:
+        local_voxel_position: Local coordinates within a chunk
+        world_voxel_position: World coordinates of the voxel
+        world_voxels: Array containing all voxel data for the world
+
+    Returns:
+        bool: True if the position is empty (void), False if it contains a voxel
+
+    Determines if a position should be considered empty for face culling.
+    Returns True for empty positions (where faces should be rendered) and
+    False for solid positions (where faces should be culled).
+    """
+    chunk_index = get_chunk_index(world_voxel_position)
+
+    if chunk_index == -1:
+        return False
+
+    chunk_voxels = world_voxels[chunk_index]
+
+    x, y, z = local_voxel_position
+    voxel_index = x % CHUNK_SIZE + z % CHUNK_SIZE * CHUNK_SIZE + y % CHUNK_SIZE * CHUNK_AREA
+
+    if chunk_voxels[voxel_index]:
+        return False
+
     return True
 
 
@@ -47,7 +81,7 @@ def add_data(vertex_data, index, *vertices):
     return index
 
 
-def build_chunk_mesh(chunk_voxels, format_size):
+def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
     """
     Build optimized vertex data for rendering a voxel chunk.
 
@@ -74,8 +108,14 @@ def build_chunk_mesh(chunk_voxels, format_size):
                 if not voxel_id:
                     continue
 
+                # Voxel world position
+                cx, cy, cz = chunk_position
+                wx = x + cx * CHUNK_SIZE
+                wy = y + cy * CHUNK_SIZE
+                wz = z + cz * CHUNK_SIZE
+
                 # Top face (vertex information for two triangles that form a face)
-                if is_void((x, y + 1, z), chunk_voxels):
+                if is_void((x, y + 1, z), (wx, wy + 1, wz), world_voxels):
                     # Attribute tuple format: (x, y, z voxel_id, face_id)
                     v0 = (x,     y + 1, z,     voxel_id, 0)
                     v1 = (x + 1, y + 1, z,     voxel_id, 0)
@@ -88,7 +128,7 @@ def build_chunk_mesh(chunk_voxels, format_size):
                 # Do the same for the other faces of the voxel
 
                 # Bottom face
-                if is_void((x, y - 1, z), chunk_voxels):
+                if is_void((x, y - 1, z), (wx, wy - 1, wz), world_voxels):
                     v0 = (x,     y, z,     voxel_id, 1)
                     v1 = (x + 1, y, z,     voxel_id, 1)
                     v2 = (x + 1, y, z + 1, voxel_id, 1)
@@ -98,7 +138,7 @@ def build_chunk_mesh(chunk_voxels, format_size):
                     index = add_data(vertex_data, index, v0, v2, v3, v0, v1, v2)
 
                 # Right face
-                if is_void((x + 1, y, z), chunk_voxels):
+                if is_void((x + 1, y, z), (wx + 1, wy, wz), world_voxels):
                     v0 = (x + 1, y,     z,     voxel_id, 2)
                     v1 = (x + 1, y + 1, z,     voxel_id, 2)
                     v2 = (x + 1, y + 1, z + 1, voxel_id, 2)
@@ -107,7 +147,7 @@ def build_chunk_mesh(chunk_voxels, format_size):
                     index = add_data(vertex_data, index, v0, v1, v2, v0, v2, v3)
 
                 # Left face
-                if is_void((x - 1, y, z), chunk_voxels):
+                if is_void((x - 1, y, z), (wx - 1, wy, wz), world_voxels):
                     v0 = (x, y,     z,     voxel_id, 3)
                     v1 = (x, y + 1, z,     voxel_id, 3)
                     v2 = (x, y + 1, z + 1, voxel_id, 3)
@@ -116,7 +156,7 @@ def build_chunk_mesh(chunk_voxels, format_size):
                     index = add_data(vertex_data, index, v0, v2, v1, v0, v3, v2)
 
                 # Back face
-                if is_void((x, y, z - 1), chunk_voxels):
+                if is_void((x, y, z - 1), (wx, wy, wz - 1), world_voxels):
                     v0 = (x,     y,     z, voxel_id, 4)
                     v1 = (x,     y + 1, z, voxel_id, 4)
                     v2 = (x + 1, y + 1, z, voxel_id, 4)
@@ -125,7 +165,7 @@ def build_chunk_mesh(chunk_voxels, format_size):
                     index = add_data(vertex_data, index, v0, v1, v2, v0, v2, v3)
 
                 # Front face
-                if is_void((x, y, z + 1), chunk_voxels):
+                if is_void((x, y, z + 1), (wx, wy, wz + 1), world_voxels):
                     v0 = (x,     y,     z + 1, voxel_id, 5)
                     v1 = (x,     y + 1, z + 1, voxel_id, 5)
                     v2 = (x + 1, y + 1, z + 1, voxel_id, 5)
