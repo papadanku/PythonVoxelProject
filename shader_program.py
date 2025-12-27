@@ -2,24 +2,23 @@
 from settings import *
 
 class ShaderProgram:
-
     def __init__(self, engine):
         self.engine = engine
         self.ctx = engine.ctx
         self.player = engine.player
 
         # Shaders
-        self.quad = self.get_program(shader_name='quad')
+        self.chunk = self.get_program(shader_name='chunk')
 
         self.set_uniforms_on_init()
     
     def set_uniforms_on_init(self):
         # Pass the CPU-calculated player positional data into the vertex shader.
-        self.quad['m_projection'].write(self.player.m_projection)
-        self.quad['m_model'].write(glm.mat4())
+        self.chunk['m_projection'].write(self.player.m_projection)
+        self.chunk['m_model'].write(glm.mat4())
 
     def update(self):
-        self.quad['m_view'].write(self.player.m_view)
+        self.chunk['m_view'].write(self.player.m_view)
     
     # This function binds shaders into the engine by reading contents from shader files.
     def get_program(self, shader_name):
