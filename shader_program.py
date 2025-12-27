@@ -16,6 +16,7 @@ class ShaderProgram:
         # Pass the CPU-calculated player positional data into the vertex shader.
         self.chunk['m_projection'].write(self.player.m_projection)
         self.chunk['m_model'].write(glm.mat4())
+        self.chunk['u_texture_0'] = 0
 
     def update(self):
         self.chunk['m_view'].write(self.player.m_view)

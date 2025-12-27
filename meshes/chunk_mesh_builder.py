@@ -11,7 +11,8 @@ def is_void(voxel_pos, chunk_voxels):
             return False
     return True
 
-# Method to add vertex attributes to the vertex data array
+# Method to add vertex attributes to the vertex data array.
+# It's a large away of data unpacked from the raw vertex data that comes in the form of tuples.
 def add_data(vertex_data, index, *vertices):
     for vertex in vertices:
         for attribute in vertex:
@@ -32,7 +33,7 @@ def build_chunk_mesh(chunk_voxels, format_size):
 
                 # Top face (vertex information for two triangles that form a face)
                 if is_void((x, y + 1, z), chunk_voxels):
-                    # Format: x, y, z voxel_id, face_id
+                    # Attribute tuple format: (x, y, z voxel_id, face_id)
                     v0 = (x,     y + 1, z,     voxel_id, 0)
                     v1 = (x + 1, y + 1, z,     voxel_id, 0)
                     v2 = (x + 1, y + 1, z + 1, voxel_id, 0)
