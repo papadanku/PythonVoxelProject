@@ -11,17 +11,18 @@ class Player(Camera):
     The Player class handles user input for movement and camera control,
     providing a first-person experience in the 3D voxel world. It processes
     keyboard input for movement and mouse input for looking around.
+
+    :var engine: Reference to the main VoxelEngine instance
     """
 
     def __init__(self, engine, position=PLAYER_POSITION, yaw=-90, pitch=0):
         """
         Initialize the player with engine reference and starting position.
 
-        Args:
-            engine: Reference to the main VoxelEngine instance
-            position: Initial 3D position (defaults to PLAYER_POSITION)
-            yaw: Initial horizontal rotation in degrees (defaults to -90)
-            pitch: Initial vertical rotation in degrees (defaults to 0)
+        :param engine: Reference to the main VoxelEngine instance
+        :param position: Initial 3D position (defaults to PLAYER_POSITION)
+        :param yaw: Initial horizontal rotation in degrees (defaults to -90)
+        :param pitch: Initial vertical rotation in degrees (defaults to 0)
         """
         super().__init__(position, yaw, pitch)
 

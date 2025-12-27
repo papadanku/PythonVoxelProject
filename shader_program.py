@@ -8,14 +8,18 @@ class ShaderProgram:
     The ShaderProgram class handles the creation, compilation, and management
     of OpenGL shader programs. It loads shader source code from files,
     compiles them, and manages uniform variable updates for rendering.
+
+    :var engine: Reference to the main VoxelEngine instance
+    :var ctx: OpenGL context for shader operations
+    :var player: Reference to the player for camera data
+    :var chunk: Shader program for chunk rendering
     """
 
     def __init__(self, engine):
         """
         Initialize shader programs with engine context.
 
-        Args:
-            engine: Reference to the main VoxelEngine instance
+        :param engine: Reference to the main VoxelEngine instance
         """
         self.engine = engine
         self.ctx = engine.ctx
@@ -51,14 +55,12 @@ class ShaderProgram:
         """
         Load and compile a shader program from source files.
 
-        Args:
-            shader_name: Base name of shader files (without extension)
-
-        Returns:
-            Compiled shader program ready for use
-
         Reads vertex and fragment shader source code from files,
         compiles them, and returns a ready-to-use shader program.
+
+        :param shader_name: Base name of shader files (without extension)
+        :return: Compiled shader program ready for use
+        :rtype: moderngl.Program
         """
         with open(f'shaders/{shader_name}.vert') as file:
             vertex_shader = file.read()

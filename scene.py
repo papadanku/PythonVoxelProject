@@ -8,14 +8,16 @@ class Scene:
 
     The Scene class manages the collection of world objects including chunks,
     coordinates their updates, and handles the rendering of the entire 3D world.
+
+    :var engine: Reference to the main VoxelEngine instance
+    :var world: World instance containing all chunks and voxels
     """
 
     def __init__(self, engine):
         """
         Initialize the scene with engine reference and create initial world objects.
 
-        Args:
-            engine: Reference to the main VoxelEngine instance
+        :param engine: Reference to the main VoxelEngine instance
         """
         self.engine = engine
         self.world = World(self.engine)

@@ -9,6 +9,12 @@ class BaseMesh:
     for creating and rendering 3D meshes. It handles vertex buffer objects,
     vertex array objects, and the rendering pipeline. Subclasses must
     implement get_vertex_data() to provide mesh-specific geometry data.
+
+    :var ctx: OpenGL context for rendering
+    :var program: Shader program for mesh rendering
+    :var vbo_format: Vertex buffer format string
+    :var attributes: Vertex attribute names for shader binding
+    :var vao: Vertex array object for rendering
     """
 
     def __init__(self):
@@ -37,11 +43,11 @@ class BaseMesh:
         """
         Get vertex data for this mesh (to be implemented by subclasses).
 
-        Returns:
-            numpy array containing vertex data in the specified format
-
         This abstract method must be implemented by concrete mesh classes
         to provide the actual geometry data for rendering.
+
+        :return: Numpy array containing vertex data in the specified format
+        :rtype: numpy.ndarray
         """
         ...
 
@@ -53,8 +59,8 @@ class BaseMesh:
         The VAO defines how the vertex data should be processed by the
         shader program during rendering.
 
-        Returns:
-            Configured vertex array object ready for rendering
+        :return: Configured vertex array object ready for rendering
+        :rtype: moderngl.VertexArray
         """
         # Creates a VAO, an object that interprets the purpose of the data stored in the VBO
         vertex_data = self.get_vertex_data()

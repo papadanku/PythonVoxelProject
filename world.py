@@ -9,14 +9,17 @@ class World:
     The World class manages the collection of chunks that make up the 3D voxel world.
     It handles chunk creation, voxel data management, mesh building, and rendering
     of the entire world structure.
+
+    :var engine: Reference to the main VoxelEngine instance
+    :var chunks: Array containing all chunk objects in the world
+    :var voxels: Array containing all voxel data for the world
     """
 
     def __init__(self, engine):
         """
         Initialize the world with engine reference and create all chunks.
 
-        Args:
-            engine: Reference to the main VoxelEngine instance
+        :param engine: Reference to the main VoxelEngine instance
         """
         self.engine = engine
         self.chunks = [None for _ in range(WORLD_VOLUME)]

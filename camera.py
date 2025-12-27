@@ -8,16 +8,24 @@ class Camera:
     The Camera class handles first-person view calculations including
     position, orientation (yaw/pitch), and movement in 3D space.
     It generates view and projection matrices for 3D rendering.
+
+    :var position: Current 3D position of the camera
+    :var yaw: Horizontal rotation angle in radians
+    :var pitch: Vertical rotation angle in radians
+    :var up: Up vector for camera orientation
+    :var right: Right vector for camera orientation
+    :var forward: Forward vector for camera orientation
+    :var m_projection: Projection matrix for perspective rendering
+    :var m_view: View matrix for camera space transformation
     """
 
     def __init__(self, position, yaw, pitch):
         """
         Initialize the camera with position and orientation.
 
-        Args:
-            position: Initial 3D position as a vector
-            yaw: Initial horizontal rotation in degrees
-            pitch: Initial vertical rotation in degrees
+        :param position: Initial 3D position as a vector
+        :param yaw: Initial horizontal rotation in degrees
+        :param pitch: Initial vertical rotation in degrees
         """
         # Positional settings
         self.position = glm.vec3(position)
@@ -69,8 +77,7 @@ class Camera:
         """
         Rotate camera vertically around the X-axis.
 
-        Args:
-            delta_y: Amount to rotate in radians (positive = look up)
+        :param delta_y: Amount to rotate in radians (positive = look up)
 
         Clamps pitch to prevent camera flipping at extremes.
         """
@@ -81,8 +88,7 @@ class Camera:
         """
         Rotate camera horizontally around the Y-axis.
 
-        Args:
-            delta_x: Amount to rotate in radians (positive = look right)
+        :param delta_x: Amount to rotate in radians (positive = look right)
         """
         self.yaw += delta_x
 
@@ -90,8 +96,7 @@ class Camera:
         """
         Move camera left relative to current orientation.
 
-        Args:
-            velocity: Distance to move
+        :param velocity: Distance to move
         """
         self.position -= self.right * velocity
 
@@ -99,8 +104,7 @@ class Camera:
         """
         Move camera right relative to current orientation.
 
-        Args:
-            velocity: Distance to move
+        :param velocity: Distance to move
         """
         self.position += self.right * velocity
 
@@ -108,8 +112,7 @@ class Camera:
         """
         Move camera up relative to current orientation.
 
-        Args:
-            velocity: Distance to move
+        :param velocity: Distance to move
         """
         self.position += self.up * velocity
 
@@ -117,8 +120,7 @@ class Camera:
         """
         Move camera down relative to current orientation.
 
-        Args:
-            velocity: Distance to move
+        :param velocity: Distance to move
         """
         self.position -= self.up * velocity
 
@@ -126,8 +128,7 @@ class Camera:
         """
         Move camera forward relative to current orientation.
 
-        Args:
-            velocity: Distance to move
+        :param velocity: Distance to move
         """
         self.position += self.forward * velocity
 
@@ -135,7 +136,6 @@ class Camera:
         """
         Move camera backward relative to current orientation.
 
-        Args:
-            velocity: Distance to move
+        :param velocity: Distance to move
         """
         self.position -= self.forward * velocity

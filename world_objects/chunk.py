@@ -9,14 +9,22 @@ class Chunk:
     The Chunk class represents a 3D grid of voxels (32*32*32) that forms
     the basic building block of the voxel world. It handles voxel data
     generation, mesh creation, and rendering of the chunk.
+
+    :var engine: Reference to the main VoxelEngine instance
+    :var world: Reference to the parent World instance
+    :var position: Chunk position in world coordinates
+    :var m_model: Model matrix for chunk transformation
+    :var voxels: Numpy array containing voxel data
+    :var mesh: ChunkMesh object for rendering
+    :var is_empty: Flag indicating if chunk contains any voxels
     """
 
     def __init__(self, world, position):
         """
         Initialize the chunk with engine reference and generate voxel data.
 
-        Args:
-            engine: Reference to the main VoxelEngine instance
+        :param world: Reference to the parent World instance
+        :param position: Chunk position in world coordinates
         """
         self.engine = world.engine
         self.world = world
@@ -33,8 +41,8 @@ class Chunk:
         Creates a transformation matrix that positions the chunk
         in world space based on its chunk coordinates.
 
-        Returns:
-            mat4: Model matrix that transforms chunk coordinates to world space
+        :return: Model matrix that transforms chunk coordinates to world space
+        :rtype: mat4
         """
         m_model = glm.translate(glm.mat4(), glm.vec3(self.position) * CHUNK_SIZE)
         return m_model
@@ -76,8 +84,8 @@ class Chunk:
         determined by position and noise, creating a procedural
         world structure.
 
-        Returns:
-            numpy array containing voxel data for the entire chunk
+        :return: Numpy array containing voxel data for the entire chunk
+        :rtype: numpy.ndarray
         """
         # Empty chunk
         voxels = np.zeros(CHUNK_VOLUME, dtype='uint8')

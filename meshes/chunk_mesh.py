@@ -10,14 +10,22 @@ class ChunkMesh(BaseMesh):
     of 3D voxel chunks. It handles the conversion of voxel data into
     renderable geometry with proper vertex attributes for position,
     voxel ID, and face identification.
+
+    :var engine: Reference to the main VoxelEngine instance
+    :var chunk: Reference to the parent Chunk instance
+    :var ctx: OpenGL context for rendering
+    :var program: Shader program for chunk rendering
+    :var vbo_format: Vertex buffer format string
+    :var format_size: Size of each vertex in the format
+    :var attributes: Vertex attribute names for shader binding
+    :var vao: Vertex array object for rendering
     """
 
     def __init__(self, chunk):
         """
         Initialize the chunk mesh with reference to its parent chunk.
 
-        Args:
-            chunk: Parent Chunk object containing voxel data
+        :param chunk: Parent Chunk object containing voxel data
         """
         super().__init__()
 
@@ -42,8 +50,8 @@ class ChunkMesh(BaseMesh):
         optimized vertex data for rendering, including face culling
         to avoid rendering hidden faces.
 
-        Returns:
-            numpy array containing vertex data for all visible voxel faces
+        :return: Numpy array containing vertex data for all visible voxel faces
+        :rtype: numpy.ndarray
         """
         mesh = build_chunk_mesh(
             chunk_voxels=self.chunk.voxels,

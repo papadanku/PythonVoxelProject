@@ -9,14 +9,17 @@ class Textures:
     The Textures class handles loading image files, converting them to
     OpenGL texture objects, and configuring their sampling parameters.
     It manages texture units and makes textures available to shaders.
+
+    :var engine: Reference to the main VoxelEngine instance
+    :var ctx: OpenGL context for texture operations
+    :var texture_0: Main texture object for rendering
     """
 
     def __init__(self, engine):
         """
         Initialize texture manager with engine context.
 
-        Args:
-            engine: Reference to the main VoxelEngine instance
+        :param engine: Reference to the main VoxelEngine instance
         """
         self.engine = engine
         self.ctx = engine.ctx
@@ -31,14 +34,12 @@ class Textures:
         """
         Load an image file and create an OpenGL texture object.
 
-        Args:
-            file_name: Name of the image file to load (from assets directory)
-
-        Returns:
-            Configured OpenGL texture object ready for rendering
-
         Loads the image, flips it appropriately for OpenGL coordinates,
         creates a texture object, and configures filtering and mipmapping.
+
+        :param file_name: Name of the image file to load (from assets directory)
+        :return: Configured OpenGL texture object ready for rendering
+        :rtype: moderngl.Texture
         """
         texture = pg.image.load(f'assets/{file_name}')
         texture = pg.transform.flip(texture, flip_x=True, flip_y=False)

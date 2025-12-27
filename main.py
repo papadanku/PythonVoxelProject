@@ -17,6 +17,16 @@ class VoxelEngine:
     The VoxelEngine handles OpenGL context creation, window management,
     core system initialization, and the main game loop. It coordinates
     all major subsystems including rendering, player input, and scene management.
+
+    :var ctx: OpenGL context for rendering
+    :var clock: Pygame clock for time management
+    :var delta_time: Time elapsed since last frame in seconds
+    :var time: Total elapsed time in seconds
+    :var is_running: Flag indicating if engine should continue running
+    :var texture: Textures manager for the engine
+    :var player: Player controller for the engine
+    :var shader_program: Shader program manager for the engine
+    :var scene: Scene manager for the engine
     """
 
     def __init__(self):

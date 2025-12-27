@@ -9,14 +9,20 @@ class QuadMesh(BaseMesh):
     The QuadMesh class creates a basic 2D quad (two triangles) with
     colored vertices. It's primarily used for testing the rendering
     pipeline and shader functionality during development.
+
+    :var engine: Reference to the main VoxelEngine instance
+    :var ctx: OpenGL context for rendering
+    :var program: Shader program for quad rendering
+    :var vbo_format: Vertex buffer format string
+    :var attributes: Vertex attribute names for shader binding
+    :var vao: Vertex array object for rendering
     """
 
     def __init__(self, engine):
         """
         Initialize the quad mesh with engine context.
 
-        Args:
-            engine: Reference to the main VoxelEngine instance
+        :param engine: Reference to the main VoxelEngine instance
         """
         super().__init__()
 
@@ -35,11 +41,11 @@ class QuadMesh(BaseMesh):
         """
         Generate vertex data for a colored quad.
 
-        Returns:
-            numpy array containing vertex positions and colors
-
         Creates vertex data for two triangles forming a quad with
         different colored vertices for visual distinction.
+
+        :return: Numpy array containing vertex positions and colors
+        :rtype: numpy.ndarray
         """
         vertices = [
             (0.5, 0.5, 0.0), (-0.5, 0.5, 0.0), (-0.5, -0.5, 0.0),
