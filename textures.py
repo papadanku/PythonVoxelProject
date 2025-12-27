@@ -3,7 +3,21 @@ import pygame as pg
 import moderngl as mgl
 
 class Textures:
+    """
+    Texture management class for loading and configuring OpenGL textures.
+
+    The Textures class handles loading image files, converting them to
+    OpenGL texture objects, and configuring their sampling parameters.
+    It manages texture units and makes textures available to shaders.
+    """
+
     def __init__(self, engine):
+        """
+        Initialize texture manager with engine context.
+
+        Args:
+            engine: Reference to the main VoxelEngine instance
+        """
         self.engine = engine
         self.ctx = engine.ctx
 
@@ -12,9 +26,20 @@ class Textures:
 
         # Assign the texture unit so the shaders can use it
         self.texture_0.use(location=0)
-    
-    # Loads a texture and configures its sample state
+
     def load(self, file_name):
+        """
+        Load an image file and create an OpenGL texture object.
+
+        Args:
+            file_name: Name of the image file to load (from assets directory)
+
+        Returns:
+            Configured OpenGL texture object ready for rendering
+
+        Loads the image, flips it appropriately for OpenGL coordinates,
+        creates a texture object, and configures filtering and mipmapping.
+        """
         texture = pg.image.load(f'assets/{file_name}')
         texture = pg.transform.flip(texture, flip_x=True, flip_y=False)
         texture = self.ctx.texture(
