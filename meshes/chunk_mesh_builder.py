@@ -1,6 +1,84 @@
 
 from settings import *
+from numba import uint8
 
+@njit
+def get_ambient_occlusion(local_position, world_position, world_voxels, plane):
+    """
+    Calculate ambient occlusion values for a voxel face.
+
+    Computes ambient occlusion by sampling neighboring voxel positions
+    around a face to determine how much light should be blocked.
+    Different sampling patterns are used depending on the face orientation
+    (X, Y, or Z plane). Returns four AO values corresponding to the
+    four corners of the face.
+
+    :param local_position: Local coordinates within the chunk
+    :param world_position: World coordinates of the face position
+    :param world_voxels: Array containing all voxel data for the world
+    :param plane: Face orientation ('X', 'Y', or 'Z')
+    :return: Tuple of four ambient occlusion values for face corners
+    :rtype: tuple
+    """
+
+    lx, ly, lz = local_position
+    wx, wy, wz = world_position
+
+    if plane == 'Y':
+        a = is_void((lx,     ly, lz - 1), (wx,     wy, wz - 1), world_voxels)
+        b = is_void((lx - 1, ly, lz - 1), (wx - 1, wy, wz - 1), world_voxels)
+        c = is_void((lx - 1, ly, lz    ), (wx - 1, wy, wz    ), world_voxels)
+        d = is_void((lx - 1, ly, lz + 1), (wx - 1, wy, wz + 1), world_voxels)
+        e = is_void((lx,     ly, lz + 1), (wx,     wy, wz + 1), world_voxels)
+        f = is_void((lx + 1, ly, lz + 1), (wx + 1, wy, wz + 1), world_voxels)
+        g = is_void((lx + 1, ly, lz    ), (wx + 1, wy, wz    ), world_voxels)
+        h = is_void((lx + 1, ly, lz - 1), (wx + 1, wy, wz - 1), world_voxels)
+
+    if plane == 'X':
+        a = is_void((lx, ly    , lz - 1), (wx, wy,     wz - 1), world_voxels)
+        b = is_void((lx, ly - 1, lz - 1), (wx, wy - 1, wz - 1), world_voxels)
+        c = is_void((lx, ly - 1, lz    ), (wx, wy - 1, wz    ), world_voxels)
+        d = is_void((lx, ly - 1, lz + 1), (wx, wy - 1, wz + 1), world_voxels)
+        e = is_void((lx, ly    , lz + 1), (wx, wy,     wz + 1), world_voxels)
+        f = is_void((lx, ly + 1, lz + 1), (wx, wy + 1, wz + 1), world_voxels)
+        g = is_void((lx, ly + 1, lz    ), (wx, wy + 1, wz    ), world_voxels)
+        h = is_void((lx, ly + 1, lz - 1), (wx, wy + 1, wz - 1), world_voxels)
+
+    if plane == 'Z':
+        a = is_void((lx - 1, ly    , lz), (wx - 1, wy,     wz), world_voxels)
+        b = is_void((lx - 1, ly - 1, lz), (wx - 1, wy - 1, wz), world_voxels)
+        c = is_void((lx    , ly - 1, lz), (wx    , wy - 1, wz), world_voxels)
+        d = is_void((lx + 1, ly - 1, lz), (wx + 1, wy - 1, wz), world_voxels)
+        e = is_void((lx + 1, ly    , lz), (wx + 1, wy,     wz), world_voxels)
+        f = is_void((lx + 1, ly + 1, lz), (wx + 1, wy + 1, wz), world_voxels)
+        g = is_void((lx    , ly + 1, lz), (wx    , wy + 1, wz), world_voxels)
+        h = is_void((lx - 1, ly + 1, lz), (wx - 1, wy + 1, wz), world_voxels)
+
+    ambient_occlusion = (a + b + c), (g + h + a), (e + f + g), (c + d + e)
+    return ambient_occlusion
+
+@njit
+def to_uint8(x, y, z, voxel_id, face_id, ao_id, flip_id):
+    """
+    Convert vertex attributes to unsigned 8-bit integers.
+
+    Converts vertex position coordinates and attribute values to uint8 format
+    for efficient storage in vertex buffers. This function creates a tuple
+    containing all vertex attributes needed for rendering.
+
+    :param x: X coordinate of the vertex position
+    :param y: Y coordinate of the vertex position
+    :param z: Z coordinate of the vertex position
+    :param voxel_id: ID of the voxel this vertex belongs to
+    :param face_id: ID of the face this vertex belongs to (0-5)
+    :param ao_id: Ambient occlusion value for this vertex
+    :param flip_id: Vertex winding order flip flag (0 or 1)
+    :return: Tuple of vertex attributes as uint8 values
+    :rtype: tuple
+    """
+    return uint8(x), uint8(y), uint8(z), uint8(voxel_id), uint8(face_id), uint8(ao_id), uint8(flip_id)
+
+@njit
 def get_chunk_index(world_voxel_position):
     """
     Calculate the chunk index for a given world voxel position.
@@ -24,6 +102,7 @@ def get_chunk_index(world_voxel_position):
     index = cx + WORLD_WIDTH * cz + WORLD_AREA * cy
     return index
 
+@njit
 def is_void(local_voxel_position, world_voxel_position, world_voxels):
     """
     Check if a voxel position is empty (void) or contains a solid voxel.
@@ -53,7 +132,7 @@ def is_void(local_voxel_position, world_voxel_position, world_voxels):
 
     return True
 
-
+@njit
 def add_data(vertex_data, index, *vertices):
     """
     Add vertex attribute data to the vertex data array.
@@ -74,7 +153,7 @@ def add_data(vertex_data, index, *vertices):
             index += 1
     return index
 
-
+@njit
 def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
     """
     Build optimized vertex data for rendering a voxel chunk.
@@ -110,61 +189,134 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
 
                 # Top face (vertex information for two triangles that form a face)
                 if is_void((x, y + 1, z), (wx, wy + 1, wz), world_voxels):
-                    # Attribute tuple format: (x, y, z voxel_id, face_id)
-                    v0 = (x,     y + 1, z,     voxel_id, 0)
-                    v1 = (x + 1, y + 1, z,     voxel_id, 0)
-                    v2 = (x + 1, y + 1, z + 1, voxel_id, 0)
-                    v3 = (x,     y + 1, z + 1, voxel_id, 0)
 
-                    # Add in counter-clockwise order
-                    index = add_data(vertex_data, index, v0, v3, v2, v0, v2, v1)
+                    # Get ambient occlusion values
+                    ao = get_ambient_occlusion((x, y + 1, z), (wx, wy + 1, wz), world_voxels, plane='Y')
+
+                    # Flip vertices to prevent ao anisotropy
+                    flip_id = ao[1] + ao[3] > ao[0] + ao[2]
+
+                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
+                    v0 = to_uint8(x,     y + 1, z,     voxel_id, 0, ao[0], flip_id)
+                    v1 = to_uint8(x + 1, y + 1, z,     voxel_id, 0, ao[1], flip_id)
+                    v2 = to_uint8(x + 1, y + 1, z + 1, voxel_id, 0, ao[2], flip_id)
+                    v3 = to_uint8(x,     y + 1, z + 1, voxel_id, 0, ao[3], flip_id)
+
+                    # Add to the VBO
+                    # Flip vertex order vertices based on orientation
+                    if flip_id:
+                        index = add_data(vertex_data, index, v1, v0, v3, v1, v3, v2)
+                    else:
+                        index = add_data(vertex_data, index, v0, v3, v2, v0, v2, v1)
 
                 # Do the same for the other faces of the voxel
 
                 # Bottom face
                 if is_void((x, y - 1, z), (wx, wy - 1, wz), world_voxels):
-                    v0 = (x,     y, z,     voxel_id, 1)
-                    v1 = (x + 1, y, z,     voxel_id, 1)
-                    v2 = (x + 1, y, z + 1, voxel_id, 1)
-                    v3 = (x,     y, z + 1, voxel_id, 1)
 
-                    # Add in counter-clockwise order
-                    index = add_data(vertex_data, index, v0, v2, v3, v0, v1, v2)
+                    # Get ambient occlusion values
+                    ao = get_ambient_occlusion((x, y - 1, z), (wx, wy - 1, wz), world_voxels, plane='Y')
+
+                    # Flip vertices to prevent ao anisotropy
+                    flip_id = ao[1] + ao[3] > ao[0] + ao[2]
+
+                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
+                    v0 = to_uint8(x,     y, z,     voxel_id, 1, ao[0], flip_id)
+                    v1 = to_uint8(x + 1, y, z,     voxel_id, 1, ao[1], flip_id)
+                    v2 = to_uint8(x + 1, y, z + 1, voxel_id, 1, ao[2], flip_id)
+                    v3 = to_uint8(x,     y, z + 1, voxel_id, 1, ao[3], flip_id)
+
+                    # Add to the VBO
+                    # Flip vertex order vertices based on orientation
+                    if flip_id:
+                        index = add_data(vertex_data, index, v1, v3, v0, v1, v2, v3)
+                    else:
+                        index = add_data(vertex_data, index, v0, v2, v3, v0, v1, v2)
 
                 # Right face
                 if is_void((x + 1, y, z), (wx + 1, wy, wz), world_voxels):
-                    v0 = (x + 1, y,     z,     voxel_id, 2)
-                    v1 = (x + 1, y + 1, z,     voxel_id, 2)
-                    v2 = (x + 1, y + 1, z + 1, voxel_id, 2)
-                    v3 = (x + 1, y,     z + 1, voxel_id, 2)
 
-                    index = add_data(vertex_data, index, v0, v1, v2, v0, v2, v3)
+                    # Get ambient occlusion values
+                    ao = get_ambient_occlusion((x + 1, y, z), (wx + 1, wy, wz), world_voxels, plane='X')
+
+                    # Flip vertices to prevent ao anisotropy
+                    flip_id = ao[1] + ao[3] > ao[0] + ao[2]
+
+                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
+                    v0 = to_uint8(x + 1, y,     z,     voxel_id, 2, ao[0], flip_id)
+                    v1 = to_uint8(x + 1, y + 1, z,     voxel_id, 2, ao[1], flip_id)
+                    v2 = to_uint8(x + 1, y + 1, z + 1, voxel_id, 2, ao[2], flip_id)
+                    v3 = to_uint8(x + 1, y,     z + 1, voxel_id, 2, ao[3], flip_id)
+
+                    # Add to the VBO
+                    # Flip vertex order vertices based on orientation
+                    if flip_id:
+                        index = add_data(vertex_data, index, v3, v0, v1, v3, v1, v2)
+                    else:
+                        index = add_data(vertex_data, index, v0, v1, v2, v0, v2, v3)
 
                 # Left face
                 if is_void((x - 1, y, z), (wx - 1, wy, wz), world_voxels):
-                    v0 = (x, y,     z,     voxel_id, 3)
-                    v1 = (x, y + 1, z,     voxel_id, 3)
-                    v2 = (x, y + 1, z + 1, voxel_id, 3)
-                    v3 = (x, y,     z + 1, voxel_id, 3)
 
-                    index = add_data(vertex_data, index, v0, v2, v1, v0, v3, v2)
+                    # Get ambient occlusion values
+                    ao = get_ambient_occlusion((x - 1, y, z), (wx - 1, wy, wz), world_voxels, plane='X')
+
+                    # Flip vertices to prevent ao anisotropy
+                    flip_id = ao[1] + ao[3] > ao[0] + ao[2]
+
+                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
+                    v0 = to_uint8(x, y,     z,     voxel_id, 3, ao[0], flip_id)
+                    v1 = to_uint8(x, y + 1, z,     voxel_id, 3, ao[1], flip_id)
+                    v2 = to_uint8(x, y + 1, z + 1, voxel_id, 3, ao[2], flip_id)
+                    v3 = to_uint8(x, y,     z + 1, voxel_id, 3, ao[3], flip_id)
+
+                    # Add to the VBO
+                    # Flip vertex order vertices based on orientation
+                    if flip_id:
+                        index = add_data(vertex_data, index, v3, v1, v0, v3, v2, v1)
+                    else:
+                        index = add_data(vertex_data, index, v0, v2, v1, v0, v3, v2)
 
                 # Back face
                 if is_void((x, y, z - 1), (wx, wy, wz - 1), world_voxels):
-                    v0 = (x,     y,     z, voxel_id, 4)
-                    v1 = (x,     y + 1, z, voxel_id, 4)
-                    v2 = (x + 1, y + 1, z, voxel_id, 4)
-                    v3 = (x + 1, y,     z, voxel_id, 4)
 
-                    index = add_data(vertex_data, index, v0, v1, v2, v0, v2, v3)
+                    # Get ambient occlusion values
+                    ao = get_ambient_occlusion((x, y, z - 1), (wx, wy, wz - 1), world_voxels, plane='Z')
+
+                    # Flip vertices to prevent ao anisotropy
+                    flip_id = ao[1] + ao[3] > ao[0] + ao[2]
+
+                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
+                    v0 = to_uint8(x,     y,     z, voxel_id, 4, ao[0], flip_id)
+                    v1 = to_uint8(x,     y + 1, z, voxel_id, 4, ao[1], flip_id)
+                    v2 = to_uint8(x + 1, y + 1, z, voxel_id, 4, ao[2], flip_id)
+                    v3 = to_uint8(x + 1, y,     z, voxel_id, 4, ao[3], flip_id)
+
+                    # Add to the VBO
+                    # Flip vertex order vertices based on orientation
+                    if flip_id:
+                        index = add_data(vertex_data, index, v3, v0, v1, v3, v1, v2)
+                    else:
+                        index = add_data(vertex_data, index, v0, v1, v2, v0, v2, v3)
 
                 # Front face
                 if is_void((x, y, z + 1), (wx, wy, wz + 1), world_voxels):
-                    v0 = (x,     y,     z + 1, voxel_id, 5)
-                    v1 = (x,     y + 1, z + 1, voxel_id, 5)
-                    v2 = (x + 1, y + 1, z + 1, voxel_id, 5)
-                    v3 = (x + 1, y    , z + 1, voxel_id, 5)
 
-                    index = add_data(vertex_data, index, v0, v2, v1, v0, v3, v2)
+                    # Get ambient occlusion values
+                    ao = get_ambient_occlusion((x, y, z + 1), (wx, wy, wz + 1), world_voxels, plane='Z')
+
+                    # Flip vertices to prevent ao anisotropy
+                    flip_id = ao[1] + ao[3] > ao[0] + ao[2]
+
+                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
+                    v0 = to_uint8(x,     y,     z + 1, voxel_id, 5, ao[0], flip_id)
+                    v1 = to_uint8(x,     y + 1, z + 1, voxel_id, 5, ao[1], flip_id)
+                    v2 = to_uint8(x + 1, y + 1, z + 1, voxel_id, 5, ao[2], flip_id)
+                    v3 = to_uint8(x + 1, y    , z + 1, voxel_id, 5, ao[3], flip_id)
+
+                    if flip_id:
+                        index = add_data(vertex_data, index, v3, v1, v0, v3, v2, v1)
+                    else:
+                        index = add_data(vertex_data, index, v0, v2, v1, v0, v3, v2)
 
     return vertex_data[:index + 1]

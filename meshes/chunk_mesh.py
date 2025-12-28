@@ -35,11 +35,11 @@ class ChunkMesh(BaseMesh):
         self.program = self.engine.shader_program.chunk
 
         # Vertex buffer format: 3 unsigned bytes for position, 1 for voxel ID, 1 for face ID
-        self.vbo_format = '3u1 1u1 1u1'
+        self.vbo_format = '3u1 1u1 1u1 1u1 1u1'
         # Total size of each vertex in the format
         self.format_size = sum(int(fmt[:1]) for fmt in self.vbo_format.split())
         # Vertex attribute names for shader binding
-        self.attributes = ('in_position', 'voxel_id', 'face_id')
+        self.attributes = ('in_position', 'voxel_id', 'face_id', 'ao_id', 'flip_id')
         self.vao = self.get_vao()
 
     def get_vertex_data(self):
