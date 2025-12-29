@@ -58,7 +58,7 @@ def get_ambient_occlusion(local_position, world_position, world_voxels, plane):
     return ambient_occlusion
 
 @njit
-def to_uint8(x, y, z, voxel_id, face_id, ao_id, flip_id):
+def pack_data(x, y, z, voxel_id, face_id, ao_id, flip_id):
     """
     Convert vertex attributes to unsigned 8-bit integers.
 
@@ -76,7 +76,27 @@ def to_uint8(x, y, z, voxel_id, face_id, ao_id, flip_id):
     :return: Tuple of vertex attributes as uint8 values
     :rtype: tuple
     """
-    return uint8(x), uint8(y), uint8(z), uint8(voxel_id), uint8(face_id), uint8(ao_id), uint8(flip_id)
+
+    # x: 6bit y: 6bit z: 6bit voxel_id: 8bit face_id: 3bit ao_id: 2bit flip_id: 1bit
+    a, b, c, d, e, f, g = x, y, z, voxel_id, face_id, ao_id, flip_id
+
+    b_bit, c_bit, d_bit, e_bit, f_bit, g_bit = 6, 6, 8, 3, 2, 1
+    fg_bit = f_bit + g_bit
+    efg_bit = e_bit + fg_bit
+    defg_bit = d_bit + efg_bit
+    cdefg_bit = c_bit + defg_bit
+    bcdefg_bit = b_bit + cdefg_bit
+
+    packed_data = (
+        a << bcdefg_bit |
+        b << cdefg_bit |
+        c << defg_bit |
+        d << efg_bit |
+        e << fg_bit |
+        f << g_bit | g
+    )
+
+    return packed_data
 
 @njit
 def get_chunk_index(world_voxel_position):
@@ -148,9 +168,8 @@ def add_data(vertex_data, index, *vertices):
     :rtype: int
     """
     for vertex in vertices:
-        for attribute in vertex:
-            vertex_data[index] = attribute
-            index += 1
+        vertex_data[index] = vertex
+        index += 1
     return index
 
 @njit
@@ -171,7 +190,7 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
     :return: Numpy array containing vertex data for all visible voxel faces
     :rtype: numpy.ndarray
     """
-    vertex_data = np.empty(CHUNK_VOLUME * 18 * format_size, dtype='uint8')
+    vertex_data = np.empty(CHUNK_VOLUME * 18 * format_size, dtype='uint32')
     index = 0
 
     for x in range(CHUNK_SIZE):
@@ -197,10 +216,10 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
                     # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
-                    v0 = to_uint8(x,     y + 1, z,     voxel_id, 0, ao[0], flip_id)
-                    v1 = to_uint8(x + 1, y + 1, z,     voxel_id, 0, ao[1], flip_id)
-                    v2 = to_uint8(x + 1, y + 1, z + 1, voxel_id, 0, ao[2], flip_id)
-                    v3 = to_uint8(x,     y + 1, z + 1, voxel_id, 0, ao[3], flip_id)
+                    v0 = pack_data(x,     y + 1, z,     voxel_id, 0, ao[0], flip_id)
+                    v1 = pack_data(x + 1, y + 1, z,     voxel_id, 0, ao[1], flip_id)
+                    v2 = pack_data(x + 1, y + 1, z + 1, voxel_id, 0, ao[2], flip_id)
+                    v3 = pack_data(x,     y + 1, z + 1, voxel_id, 0, ao[3], flip_id)
 
                     # Add to the VBO
                     # Flip vertex order vertices based on orientation
@@ -221,10 +240,10 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
                     # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
-                    v0 = to_uint8(x,     y, z,     voxel_id, 1, ao[0], flip_id)
-                    v1 = to_uint8(x + 1, y, z,     voxel_id, 1, ao[1], flip_id)
-                    v2 = to_uint8(x + 1, y, z + 1, voxel_id, 1, ao[2], flip_id)
-                    v3 = to_uint8(x,     y, z + 1, voxel_id, 1, ao[3], flip_id)
+                    v0 = pack_data(x,     y, z,     voxel_id, 1, ao[0], flip_id)
+                    v1 = pack_data(x + 1, y, z,     voxel_id, 1, ao[1], flip_id)
+                    v2 = pack_data(x + 1, y, z + 1, voxel_id, 1, ao[2], flip_id)
+                    v3 = pack_data(x,     y, z + 1, voxel_id, 1, ao[3], flip_id)
 
                     # Add to the VBO
                     # Flip vertex order vertices based on orientation
@@ -243,10 +262,10 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
                     # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
-                    v0 = to_uint8(x + 1, y,     z,     voxel_id, 2, ao[0], flip_id)
-                    v1 = to_uint8(x + 1, y + 1, z,     voxel_id, 2, ao[1], flip_id)
-                    v2 = to_uint8(x + 1, y + 1, z + 1, voxel_id, 2, ao[2], flip_id)
-                    v3 = to_uint8(x + 1, y,     z + 1, voxel_id, 2, ao[3], flip_id)
+                    v0 = pack_data(x + 1, y,     z,     voxel_id, 2, ao[0], flip_id)
+                    v1 = pack_data(x + 1, y + 1, z,     voxel_id, 2, ao[1], flip_id)
+                    v2 = pack_data(x + 1, y + 1, z + 1, voxel_id, 2, ao[2], flip_id)
+                    v3 = pack_data(x + 1, y,     z + 1, voxel_id, 2, ao[3], flip_id)
 
                     # Add to the VBO
                     # Flip vertex order vertices based on orientation
@@ -265,10 +284,10 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
                     # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
-                    v0 = to_uint8(x, y,     z,     voxel_id, 3, ao[0], flip_id)
-                    v1 = to_uint8(x, y + 1, z,     voxel_id, 3, ao[1], flip_id)
-                    v2 = to_uint8(x, y + 1, z + 1, voxel_id, 3, ao[2], flip_id)
-                    v3 = to_uint8(x, y,     z + 1, voxel_id, 3, ao[3], flip_id)
+                    v0 = pack_data(x, y,     z,     voxel_id, 3, ao[0], flip_id)
+                    v1 = pack_data(x, y + 1, z,     voxel_id, 3, ao[1], flip_id)
+                    v2 = pack_data(x, y + 1, z + 1, voxel_id, 3, ao[2], flip_id)
+                    v3 = pack_data(x, y,     z + 1, voxel_id, 3, ao[3], flip_id)
 
                     # Add to the VBO
                     # Flip vertex order vertices based on orientation
@@ -287,10 +306,10 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
                     # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
-                    v0 = to_uint8(x,     y,     z, voxel_id, 4, ao[0], flip_id)
-                    v1 = to_uint8(x,     y + 1, z, voxel_id, 4, ao[1], flip_id)
-                    v2 = to_uint8(x + 1, y + 1, z, voxel_id, 4, ao[2], flip_id)
-                    v3 = to_uint8(x + 1, y,     z, voxel_id, 4, ao[3], flip_id)
+                    v0 = pack_data(x,     y,     z, voxel_id, 4, ao[0], flip_id)
+                    v1 = pack_data(x,     y + 1, z, voxel_id, 4, ao[1], flip_id)
+                    v2 = pack_data(x + 1, y + 1, z, voxel_id, 4, ao[2], flip_id)
+                    v3 = pack_data(x + 1, y,     z, voxel_id, 4, ao[3], flip_id)
 
                     # Add to the VBO
                     # Flip vertex order vertices based on orientation
@@ -309,10 +328,10 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
                     # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
-                    v0 = to_uint8(x,     y,     z + 1, voxel_id, 5, ao[0], flip_id)
-                    v1 = to_uint8(x,     y + 1, z + 1, voxel_id, 5, ao[1], flip_id)
-                    v2 = to_uint8(x + 1, y + 1, z + 1, voxel_id, 5, ao[2], flip_id)
-                    v3 = to_uint8(x + 1, y    , z + 1, voxel_id, 5, ao[3], flip_id)
+                    v0 = pack_data(x,     y,     z + 1, voxel_id, 5, ao[0], flip_id)
+                    v1 = pack_data(x,     y + 1, z + 1, voxel_id, 5, ao[1], flip_id)
+                    v2 = pack_data(x + 1, y + 1, z + 1, voxel_id, 5, ao[2], flip_id)
+                    v3 = pack_data(x + 1, y    , z + 1, voxel_id, 5, ao[3], flip_id)
 
                     if flip_id:
                         index = add_data(vertex_data, index, v3, v1, v0, v3, v2, v1)
