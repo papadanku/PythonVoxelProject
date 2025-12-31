@@ -8,9 +8,7 @@ class Player(Camera):
     """
     Player class that extends Camera to provide first-person control.
 
-    The Player class handles user input for movement and camera control,
-    providing a first-person experience in the 3D voxel world. It processes
-    keyboard input for movement and mouse input for looking around.
+    The Player class handles user input for movement and camera control, providing a first-person experience in the 3D voxel world. It processes keyboard input for movement and mouse input for looking around.
 
     :var engine: Reference to the main VoxelEngine instance
     """
@@ -32,20 +30,28 @@ class Player(Camera):
         """
         Update player state by processing input and camera orientation.
 
-        Handles keyboard and mouse input, then updates the camera
-        view matrix based on the new orientation.
+        Handles keyboard and mouse input, then updates the camera view matrix based on the new orientation.
         """
         self.keyboard_control()
         self.mouse_control()
         super().update()
+
+    def handle_event(self, event):
+        # Adding and removing voxels with clicks
+        if event.type == pg.MOUSEBUTTONDOWN:
+            voxel_handler = self.engine.scene.world.voxel_handler
+            if event.button == 1:
+                voxel_handler.set_voxel()
+            if event.button == 3:
+                voxel_handler.switch_mode()
 
     def mouse_control(self):
         """
         Process mouse input for camera look control.
 
         Reads mouse movement and applies it to camera rotation.
-        Horizontal mouse movement controls yaw (left/right), vertical
-        movement controls pitch (up/down).
+
+        Horizontal mouse movement controls yaw (left/right), vertical movement controls pitch (up/down).
         """
         mouse_dx, mouse_dy = pg.mouse.get_rel()
         if mouse_dx:
@@ -65,8 +71,7 @@ class Player(Camera):
         - Q: Move up
         - E: Move down
 
-        Movement speed is scaled by delta time for consistent movement
-        regardless of frame rate.
+        Movement speed is scaled by delta time for consistent movement regardless of frame rate.
         """
         key_state = pg.key.get_pressed()
         velocity = PLAYER_SPEED * self.engine.delta_time

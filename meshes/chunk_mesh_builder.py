@@ -7,11 +7,9 @@ def get_ambient_occlusion(local_position, world_position, world_voxels, plane):
     """
     Calculate ambient occlusion values for a voxel face.
 
-    Computes ambient occlusion by sampling neighboring voxel positions
-    around a face to determine how much light should be blocked.
-    Different sampling patterns are used depending on the face orientation
-    (X, Y, or Z plane). Returns four AO values corresponding to the
-    four corners of the face.
+    Computes ambient occlusion by sampling neighboring voxel positions around a face to determine how much light should be blocked.
+
+    Different sampling patterns are used depending on the face orientation X, Y, or Z plane). Returns four AO values corresponding to the four corners of the face.
 
     :param local_position: Local coordinates within the chunk
     :param world_position: World coordinates of the face position
@@ -62,9 +60,7 @@ def pack_data(x, y, z, voxel_id, face_id, ao_id, flip_id):
     """
     Convert vertex attributes to unsigned 8-bit integers.
 
-    Converts vertex position coordinates and attribute values to uint8 format
-    for efficient storage in vertex buffers. This function creates a tuple
-    containing all vertex attributes needed for rendering.
+    Converts vertex position coordinates and attribute values to uint8 format for efficient storage in vertex buffers. This function creates a tuple containing all vertex attributes needed for rendering.
 
     :param x: X coordinate of the vertex position
     :param y: Y coordinate of the vertex position
@@ -103,9 +99,7 @@ def get_chunk_index(world_voxel_position):
     """
     Calculate the chunk index for a given world voxel position.
 
-    Converts world coordinates to chunk coordinates and calculates
-    the linear index in the chunks array. Returns -1 for positions
-    outside the valid world bounds.
+    Converts world coordinates to chunk coordinates and calculates the linear index in the chunks array. Returns -1 for positions outside the valid world bounds.
 
     :param world_voxel_position: Tuple containing (x, y, z) world coordinates
     :return: Index of the chunk containing the voxel, or -1 if out of bounds
@@ -116,9 +110,11 @@ def get_chunk_index(world_voxel_position):
     cy = wy // CHUNK_SIZE
     cz = wz // CHUNK_SIZE
 
-    if not ((0 <= cx < WORLD_WIDTH) and (0 <= cy < WORLD_HEIGHT) and (0 <= cz < WORLD_DEPTH)):
+    # Return an invalid index (-1) for out-of-bound chunks
+    if not (0 <= cx < WORLD_WIDTH) and (0 <= cy < WORLD_HEIGHT) and (0 <= cz < WORLD_DEPTH):
         return -1
 
+    # Find the index from a 1D array that represents 3D
     index = cx + WORLD_WIDTH * cz + WORLD_AREA * cy
     return index
 
@@ -128,8 +124,8 @@ def is_void(local_voxel_position, world_voxel_position, world_voxels):
     Check if a voxel position is empty (void) or contains a solid voxel.
 
     Determines if a position should be considered empty for face culling.
-    Returns True for empty positions (where faces should be rendered) and
-    False for solid positions (where faces should be culled).
+
+    Returns True for empty positions (where faces should be rendered) and False for solid positions (where faces should be culled).
 
     :param local_voxel_position: Local coordinates within a chunk
     :param world_voxel_position: World coordinates of the voxel
@@ -144,6 +140,7 @@ def is_void(local_voxel_position, world_voxel_position, world_voxels):
 
     chunk_voxels = world_voxels[chunk_index]
 
+    # Create the index from a 1D array that represents 3D
     x, y, z = local_voxel_position
     voxel_index = x % CHUNK_SIZE + z % CHUNK_SIZE * CHUNK_SIZE + y % CHUNK_SIZE * CHUNK_AREA
 
@@ -157,9 +154,7 @@ def add_data(vertex_data, index, *vertices):
     """
     Add vertex attribute data to the vertex data array.
 
-    Unpacks vertex attribute tuples and adds them sequentially to the
-    vertex data array. Each vertex tuple contains position, voxel ID,
-    and face ID attributes.
+    Unpacks vertex attribute tuples and adds them sequentially to the vertex data array. Each vertex tuple contains position, voxel ID, and face ID attributes.
 
     :param vertex_data: Target array to receive vertex data
     :param index: Starting index in the target array
@@ -178,10 +173,10 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
     Build optimized vertex data for rendering a voxel chunk.
 
     This function converts 3D voxel data into optimized geometry for rendering.
-    It implements face culling to avoid rendering faces that are adjacent to
-    other voxels, significantly reducing the number of triangles rendered.
-    Each visible face is converted to two triangles (6 vertices) with appropriate
-    vertex attributes including position, voxel ID, and face ID.
+
+    It implements face culling to avoid rendering faces that are adjacent to other voxels, significantly reducing the number of triangles rendered.
+
+    Each visible face is converted to two triangles (6 vertices) with appropriate vertex attributes including position, voxel ID, and face ID.
 
     :param chunk_voxels: Array containing voxel data for the chunk
     :param format_size: Size of each vertex in the output format

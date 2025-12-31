@@ -17,6 +17,9 @@ import numpy as np
 WIN_RES = glm.vec2(1600, 900)
 """Window resolution in pixels (width, height). Defines the size of the game window."""
 
+# Ray-casting settings
+MAX_RAY_DISTANCE = 6
+
 # Chunk settings
 CHUNK_SIZE = 32
 """Size of each chunk in voxels along one dimension. Chunks are cubic."""

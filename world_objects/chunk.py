@@ -1,4 +1,6 @@
 
+import random
+
 from settings import *
 from meshes.chunk_mesh import ChunkMesh
 
@@ -6,9 +8,7 @@ class Chunk:
     """
     3D chunk class that manages a grid of voxels and their rendering.
 
-    The Chunk class represents a 3D grid of voxels (32*32*32) that forms
-    the basic building block of the voxel world. It handles voxel data
-    generation, mesh creation, and rendering of the chunk.
+    The Chunk class represents a 3D grid of voxels (32*32*32) that forms the basic building block of the voxel world. It handles voxel data generation, mesh creation, and rendering of the chunk.
 
     :var engine: Reference to the main VoxelEngine instance
     :var world: Reference to the parent World instance
@@ -38,8 +38,7 @@ class Chunk:
         """
         Calculate the model matrix for this chunk.
 
-        Creates a transformation matrix that positions the chunk
-        in world space based on its chunk coordinates.
+        Creates a transformation matrix that positions the chunk in world space based on its chunk coordinates.
 
         :return: Model matrix that transforms chunk coordinates to world space
         :rtype: mat4
@@ -51,8 +50,7 @@ class Chunk:
         """
         Update shader uniforms for this chunk.
 
-        Writes the model matrix to the shader program so the chunk
-        can be rendered in the correct position in world space.
+        Writes the model matrix to the shader program so the chunk can be rendered in the correct position in world space.
         """
         self.mesh.program['m_model'].write(self.m_model)
 
@@ -60,8 +58,7 @@ class Chunk:
         """
         Create the renderable mesh for this chunk.
 
-        Generates a ChunkMesh object that converts the voxel data
-        into optimized geometry for rendering.
+        Generates a ChunkMesh object that converts the voxel data into optimized geometry for rendering.
         """
         self.mesh = ChunkMesh(self)
 
@@ -79,10 +76,7 @@ class Chunk:
         """
         Generate procedural voxel data for this chunk.
 
-        Creates a 3D array of voxel values using simplex noise to
-        generate interesting terrain patterns. Voxel values are
-        determined by position and noise, creating a procedural
-        world structure.
+        Creates a 3D array of voxel values using simplex noise to generate interesting terrain patterns. Voxel values are determined by position and noise, creating a procedural world structure.
 
         :return: Numpy array containing voxel data for the entire chunk
         :rtype: numpy.ndarray
@@ -92,6 +86,7 @@ class Chunk:
 
         # Fill chunk
         cx, cy, cz = glm.ivec3(self.position) * CHUNK_SIZE
+        random_number = random.randrange(1, 100)
 
         for x in range(CHUNK_SIZE):
             for z in range(CHUNK_SIZE):
@@ -102,7 +97,8 @@ class Chunk:
 
                 for y in range(local_height):
                     wy = y + cy
-                    voxels[x + CHUNK_SIZE * z + CHUNK_AREA * y] = wy + 1
+                    voxel_index = x + CHUNK_SIZE * z + CHUNK_AREA * y
+                    voxels[voxel_index] = random_number
 
         if np.any(voxels):
             self.is_empty = False

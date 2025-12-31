@@ -6,10 +6,7 @@ class ChunkMesh(BaseMesh):
     """
     Specialized mesh class for rendering voxel chunks.
 
-    The ChunkMesh class extends BaseMesh to provide optimized rendering
-    of 3D voxel chunks. It handles the conversion of voxel data into
-    renderable geometry with proper vertex attributes for position,
-    voxel ID, and face identification.
+    The ChunkMesh class extends BaseMesh to provide optimized rendering of 3D voxel chunks. It handles the conversion of voxel data into renderable geometry with proper vertex attributes for position, voxel ID, and face identification.
 
     :var engine: Reference to the main VoxelEngine instance
     :var chunk: Reference to the parent Chunk instance
@@ -42,13 +39,14 @@ class ChunkMesh(BaseMesh):
         self.attributes = ('packed_data',)
         self.vao = self.get_vao()
 
+    def rebuild(self):
+        self.vao = self.get_vao()
+
     def get_vertex_data(self):
         """
         Generate vertex data from chunk voxel data.
 
-        Uses the chunk mesh builder to convert voxel data into
-        optimized vertex data for rendering, including face culling
-        to avoid rendering hidden faces.
+        Uses the chunk mesh builder to convert voxel data into optimized vertex data for rendering, including face culling to avoid rendering hidden faces.
 
         :return: Numpy array containing vertex data for all visible voxel faces
         :rtype: numpy.ndarray

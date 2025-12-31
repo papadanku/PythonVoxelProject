@@ -5,9 +5,7 @@ class ShaderProgram:
     """
     Shader program management class for OpenGL rendering.
 
-    The ShaderProgram class handles the creation, compilation, and management
-    of OpenGL shader programs. It loads shader source code from files,
-    compiles them, and manages uniform variable updates for rendering.
+    The ShaderProgram class handles the creation, compilation, and management of OpenGL shader programs. It loads shader source code from files, compiles them, and manages uniform variable updates for rendering.
 
     :var engine: Reference to the main VoxelEngine instance
     :var ctx: OpenGL context for shader operations
@@ -27,6 +25,7 @@ class ShaderProgram:
 
         # Shaders
         self.chunk = self.get_program(shader_name='chunk')
+        self.voxel_marker = self.get_program(shader_name='voxel_marker')
 
         self.set_uniforms_on_init()
 
@@ -34,29 +33,32 @@ class ShaderProgram:
         """
         Set initial uniform values for shader programs.
 
-        Configures projection matrix, model matrix, and texture units
-        that remain constant or change infrequently during rendering.
+        Configures projection matrix, model matrix, and texture units that remain constant or change infrequently during rendering.
         """
-        # Pass the CPU-calculated player positional data into the vertex shader.
+        # Pass the CPU-calculated player positional data into the vertex shader for the Chunk shader
         self.chunk['m_projection'].write(self.player.m_projection)
         self.chunk['m_model'].write(glm.mat4())
         self.chunk['u_texture_0'] = 0
+
+        # Pass the CPU-calculated player positional data into the vertex shader for the Vertex Marker shader
+        self.voxel_marker['m_projection'].write(self.player.m_projection)
+        self.voxel_marker['m_model'].write(glm.mat4())
+        self.voxel_marker['u_texture_0'] = 0
 
     def update(self):
         """
         Update shader uniforms that change frequently.
 
-        Updates the view matrix each frame based on current
-        camera position and orientation.
+        Updates the view matrix each frame based on current camera position and orientation.
         """
         self.chunk['m_view'].write(self.player.m_view)
+        self.voxel_marker['m_view'].write(self.player.m_view)
 
     def get_program(self, shader_name):
         """
         Load and compile a shader program from source files.
 
-        Reads vertex and fragment shader source code from files,
-        compiles them, and returns a ready-to-use shader program.
+        Reads vertex and fragment shader source code from files, compiles them, and returns a ready-to-use shader program.
 
         :param shader_name: Base name of shader files (without extension)
         :return: Compiled shader program ready for use

@@ -29,7 +29,7 @@ void main()
     tex_color = pow(tex_color, gamma);
 
     // Combine texture color with procedural voxel color
-    tex_color = voxel_color;
+    tex_color *= voxel_color;
 
     // Multiply by the face id.
     tex_color *= shading;
