@@ -193,7 +193,7 @@ class VoxelHandler:
 
             if result[0]:
 
-                # Use traditional assignment to avoid Python version compatibility issues
+                # Extract voxel data from result
                 self.voxel_id = result[0]
                 self.voxel_index = result[1]
                 self.voxel_local_position = result[2]
@@ -244,7 +244,7 @@ class VoxelHandler:
         """
         cx, cy, cz = chunk_position = voxel_world_position / CHUNK_SIZE
 
-        # Make sure the chunk position we are working is within-bounds
+        # Check if chunk position is within valid world bounds
         if (0 <= cx < WORLD_WIDTH) and (0 <= cy < WORLD_HEIGHT) and (0 <= cz < WORLD_DEPTH):
             # Get the chunk and its index
             chunk_index = cx + WORLD_WIDTH * cz + WORLD_AREA * cy
@@ -256,6 +256,6 @@ class VoxelHandler:
             voxel_index = lx + CHUNK_SIZE * lz + CHUNK_AREA * ly
             voxel_id = chunk.voxels[voxel_index]
 
-            # Voxel, Voxel's Index Value, Voxel's Local Position, Chunk Information
+            # Return voxel data
             return voxel_id, voxel_index, voxel_local_position, chunk
         return 0, 0, 0, 0

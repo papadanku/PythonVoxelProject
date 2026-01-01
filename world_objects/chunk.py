@@ -84,10 +84,10 @@ class Chunk:
         :return: Numpy array containing voxel data for the entire chunk
         :rtype: numpy.ndarray
         """
-        # Empty chunk
+        # Create empty chunk
         voxels = np.zeros(CHUNK_VOLUME, dtype='uint8')
 
-        # Fill chunk
+        # Generate voxel data
         cx, cy, cz = glm.ivec3(self.position) * CHUNK_SIZE
         random_number = random.randrange(1, 100)
 

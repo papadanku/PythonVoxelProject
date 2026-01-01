@@ -73,9 +73,10 @@ def pack_data(x, y, z, voxel_id, face_id, ao_id, flip_id):
     :rtype: tuple
     """
 
-    # x: 6bit y: 6bit z: 6bit voxel_id: 8bit face_id: 3bit ao_id: 2bit flip_id: 1bit
+    # Define bit allocation: x: 6bit y: 6bit z: 6bit voxel_id: 8bit face_id: 3bit ao_id: 2bit flip_id: 1bit
     a, b, c, d, e, f, g = x, y, z, voxel_id, face_id, ao_id, flip_id
 
+    # Calculate bit positions
     b_bit, c_bit, d_bit, e_bit, f_bit, g_bit = 6, 6, 8, 3, 2, 1
     fg_bit = f_bit + g_bit
     efg_bit = e_bit + fg_bit
@@ -83,6 +84,7 @@ def pack_data(x, y, z, voxel_id, face_id, ao_id, flip_id):
     cdefg_bit = c_bit + defg_bit
     bcdefg_bit = b_bit + cdefg_bit
 
+    # Pack all attributes into a single unsigned integer
     packed_data = (
         a << bcdefg_bit |
         b << cdefg_bit |
@@ -140,7 +142,7 @@ def is_void(local_voxel_position, world_voxel_position, world_voxels):
 
     chunk_voxels = world_voxels[chunk_index]
 
-    # Create the index from a 1D array that represents 3D
+    # Calculate voxel index in 1D array
     x, y, z = local_voxel_position
     voxel_index = x % CHUNK_SIZE + z % CHUNK_SIZE * CHUNK_SIZE + y % CHUNK_SIZE * CHUNK_AREA
 
@@ -162,6 +164,7 @@ def add_data(vertex_data, index, *vertices):
     :return: Updated index pointing to next available position in vertex_data
     :rtype: int
     """
+    # Add each vertex to the array and increment index
     for vertex in vertices:
         vertex_data[index] = vertex
         index += 1
@@ -185,9 +188,11 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
     :return: Numpy array containing vertex data for all visible voxel faces
     :rtype: numpy.ndarray
     """
+    # Allocate vertex data array
     vertex_data = np.empty(CHUNK_VOLUME * 18 * format_size, dtype='uint32')
     index = 0
 
+    # Process each voxel in the chunk
     for x in range(CHUNK_SIZE):
         for y in range(CHUNK_SIZE):
             for z in range(CHUNK_SIZE):
@@ -195,53 +200,46 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                 if not voxel_id:
                     continue
 
-                # Voxel world position
+                # Calculate voxel world position
                 cx, cy, cz = chunk_position
                 wx = x + cx * CHUNK_SIZE
                 wy = y + cy * CHUNK_SIZE
                 wz = z + cz * CHUNK_SIZE
 
-                # Top face (vertex information for two triangles that form a face)
+                # Process top face
                 if is_void((x, y + 1, z), (wx, wy + 1, wz), world_voxels):
 
-                    # Get ambient occlusion values
+                    # Calculate ambient occlusion values
                     ao = get_ambient_occlusion((x, y + 1, z), (wx, wy + 1, wz), world_voxels, plane='Y')
 
-                    # Flip vertices to prevent ao anisotropy
+                    # Determine if vertices need flipping
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
-                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
+                    # Create vertex data
                     v0 = pack_data(x,     y + 1, z,     voxel_id, 0, ao[0], flip_id)
                     v1 = pack_data(x + 1, y + 1, z,     voxel_id, 0, ao[1], flip_id)
                     v2 = pack_data(x + 1, y + 1, z + 1, voxel_id, 0, ao[2], flip_id)
                     v3 = pack_data(x,     y + 1, z + 1, voxel_id, 0, ao[3], flip_id)
 
-                    # Add to the VBO
-                    # Flip vertex order vertices based on orientation
+                    # Add vertices to the array
                     if flip_id:
                         index = add_data(vertex_data, index, v1, v0, v3, v1, v3, v2)
                     else:
                         index = add_data(vertex_data, index, v0, v3, v2, v0, v2, v1)
 
-                # Do the same for the other faces of the voxel
+                # Process remaining faces
 
                 # Bottom face
                 if is_void((x, y - 1, z), (wx, wy - 1, wz), world_voxels):
 
-                    # Get ambient occlusion values
                     ao = get_ambient_occlusion((x, y - 1, z), (wx, wy - 1, wz), world_voxels, plane='Y')
-
-                    # Flip vertices to prevent ao anisotropy
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
-                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
                     v0 = pack_data(x,     y, z,     voxel_id, 1, ao[0], flip_id)
                     v1 = pack_data(x + 1, y, z,     voxel_id, 1, ao[1], flip_id)
                     v2 = pack_data(x + 1, y, z + 1, voxel_id, 1, ao[2], flip_id)
                     v3 = pack_data(x,     y, z + 1, voxel_id, 1, ao[3], flip_id)
 
-                    # Add to the VBO
-                    # Flip vertex order vertices based on orientation
                     if flip_id:
                         index = add_data(vertex_data, index, v1, v3, v0, v1, v2, v3)
                     else:
@@ -250,20 +248,14 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                 # Right face
                 if is_void((x + 1, y, z), (wx + 1, wy, wz), world_voxels):
 
-                    # Get ambient occlusion values
                     ao = get_ambient_occlusion((x + 1, y, z), (wx + 1, wy, wz), world_voxels, plane='X')
-
-                    # Flip vertices to prevent ao anisotropy
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
-                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
                     v0 = pack_data(x + 1, y,     z,     voxel_id, 2, ao[0], flip_id)
                     v1 = pack_data(x + 1, y + 1, z,     voxel_id, 2, ao[1], flip_id)
                     v2 = pack_data(x + 1, y + 1, z + 1, voxel_id, 2, ao[2], flip_id)
                     v3 = pack_data(x + 1, y,     z + 1, voxel_id, 2, ao[3], flip_id)
 
-                    # Add to the VBO
-                    # Flip vertex order vertices based on orientation
                     if flip_id:
                         index = add_data(vertex_data, index, v3, v0, v1, v3, v1, v2)
                     else:
@@ -272,20 +264,14 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                 # Left face
                 if is_void((x - 1, y, z), (wx - 1, wy, wz), world_voxels):
 
-                    # Get ambient occlusion values
                     ao = get_ambient_occlusion((x - 1, y, z), (wx - 1, wy, wz), world_voxels, plane='X')
-
-                    # Flip vertices to prevent ao anisotropy
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
-                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
                     v0 = pack_data(x, y,     z,     voxel_id, 3, ao[0], flip_id)
                     v1 = pack_data(x, y + 1, z,     voxel_id, 3, ao[1], flip_id)
                     v2 = pack_data(x, y + 1, z + 1, voxel_id, 3, ao[2], flip_id)
                     v3 = pack_data(x, y,     z + 1, voxel_id, 3, ao[3], flip_id)
 
-                    # Add to the VBO
-                    # Flip vertex order vertices based on orientation
                     if flip_id:
                         index = add_data(vertex_data, index, v3, v1, v0, v3, v2, v1)
                     else:
@@ -294,20 +280,14 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                 # Back face
                 if is_void((x, y, z - 1), (wx, wy, wz - 1), world_voxels):
 
-                    # Get ambient occlusion values
                     ao = get_ambient_occlusion((x, y, z - 1), (wx, wy, wz - 1), world_voxels, plane='Z')
-
-                    # Flip vertices to prevent ao anisotropy
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
-                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
                     v0 = pack_data(x,     y,     z, voxel_id, 4, ao[0], flip_id)
                     v1 = pack_data(x,     y + 1, z, voxel_id, 4, ao[1], flip_id)
                     v2 = pack_data(x + 1, y + 1, z, voxel_id, 4, ao[2], flip_id)
                     v3 = pack_data(x + 1, y,     z, voxel_id, 4, ao[3], flip_id)
 
-                    # Add to the VBO
-                    # Flip vertex order vertices based on orientation
                     if flip_id:
                         index = add_data(vertex_data, index, v3, v0, v1, v3, v1, v2)
                     else:
@@ -316,13 +296,9 @@ def build_chunk_mesh(chunk_voxels, format_size, chunk_position, world_voxels):
                 # Front face
                 if is_void((x, y, z + 1), (wx, wy, wz + 1), world_voxels):
 
-                    # Get ambient occlusion values
                     ao = get_ambient_occlusion((x, y, z + 1), (wx, wy, wz + 1), world_voxels, plane='Z')
-
-                    # Flip vertices to prevent ao anisotropy
                     flip_id = ao[1] + ao[3] > ao[0] + ao[2]
 
-                    # Attribute tuple format: (x, y, z voxel_id, face_id, ao_id, flip_id)
                     v0 = pack_data(x,     y,     z + 1, voxel_id, 5, ao[0], flip_id)
                     v1 = pack_data(x,     y + 1, z + 1, voxel_id, 5, ao[1], flip_id)
                     v2 = pack_data(x + 1, y + 1, z + 1, voxel_id, 5, ao[2], flip_id)
