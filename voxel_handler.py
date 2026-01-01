@@ -246,6 +246,7 @@ class VoxelHandler:
 
         # Check if chunk position is within valid world bounds
         if (0 <= cx < WORLD_WIDTH) and (0 <= cy < WORLD_HEIGHT) and (0 <= cz < WORLD_DEPTH):
+
             # Get the chunk and its index
             chunk_index = cx + WORLD_WIDTH * cz + WORLD_AREA * cy
             chunk = self.chunks[chunk_index]
@@ -258,4 +259,5 @@ class VoxelHandler:
 
             # Return voxel data
             return voxel_id, voxel_index, voxel_local_position, chunk
+
         return 0, 0, 0, 0

@@ -38,7 +38,7 @@ class ShaderProgram:
         # Pass the CPU-calculated player positional data into the vertex shader for the Chunk shader
         self.chunk['m_projection'].write(self.player.m_projection)
         self.chunk['m_model'].write(glm.mat4())
-        self.chunk['u_texture_0'] = 0
+        self.chunk['u_texture_array_0'] = 1
 
         # Pass the CPU-calculated player positional data into the vertex shader for the Vertex Marker shader
         self.voxel_marker['m_projection'].write(self.player.m_projection)
