@@ -45,14 +45,14 @@ class World:
                 for z in range(WORLD_DEPTH):
                     chunk = Chunk(self, position=(x, y, z))
 
-                    # Find the index from a 1D array that represents 3D
+                    # Calculate chunk index in 1D array
                     chunk_index = x + WORLD_WIDTH * z + WORLD_AREA * y
                     self.chunks[chunk_index] = chunk
 
-                    # Put the chunk voxels in a separate array
+                    # Store chunk voxels in central array
                     self.voxels[chunk_index] = chunk.build_voxels()
 
-                    # Get pointer to voxels
+                    # Link chunk to its voxel data
                     chunk.voxels = self.voxels[chunk_index]
 
     def build_chunk_mesh(self):

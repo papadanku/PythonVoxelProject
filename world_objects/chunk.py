@@ -34,6 +34,9 @@ class Chunk:
         self.mesh: ChunkMesh = None
         self.is_empty = True
 
+        self.center = (glm.vec3(self.position) + 0.5) * CHUNK_SIZE
+        self.is_on_frustum = self.engine.player.frustum.is_on_frustum
+
     def get_model_matrix(self):
         """
         Calculate the model matrix for this chunk.
@@ -68,7 +71,7 @@ class Chunk:
 
         Delegates rendering to the chunk's mesh object.
         """
-        if not self.is_empty:
+        if not self.is_empty and self.is_on_frustum(self):
             self.set_uniform()
             self.mesh.render()
 

@@ -35,34 +35,35 @@ class VoxelEngine:
         """
         pg.init()
 
-        # We will use OpenGL 3.3 Core with a 24-integer depth buffer.
+        # Configure OpenGL 3.3 Core context with 24-bit depth buffer
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_MAJOR_VERSION, 3)
         pg.display.gl_set_attribute(pg.GL_CONTEXT_PROFILE_MASK, pg.GL_CONTEXT_PROFILE_CORE)
         pg.display.gl_set_attribute(pg.GL_DEPTH_SIZE, 24)
 
-        # Our window display settings.
+        # Set up the display window
         pg.display.set_mode(WIN_RES, flags=pg.OPENGL | pg.DOUBLEBUF)
 
-        # Prevent the mouse from displaying outside the border.
+        # Lock mouse cursor to window and hide it
         pg.event.set_grab(True)
         pg.mouse.set_visible(False)
 
-        # The VoxelEngine will have a context.
+        # Create OpenGL context
         self.ctx = mgl.create_context()
 
-        # Enable depth testing, face culling, and buffer blending.
+        # Enable essential rendering features
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE | mgl.BLEND)
 
-        # Automatic garbage collection.
+        # Enable automatic garbage collection
         self.ctx.gc_mode = 'auto'
 
-        # Time data.
+        # Initialize timing and control variables
         self.clock = pg.time.Clock()
         self.delta_time = 0
         self.time = 0
         self.is_running = True
 
+        # Initialize engine subsystems
         self.on_init()
 
     def on_init(self):
@@ -71,7 +72,7 @@ class VoxelEngine:
 
         Creates and configures the core engine components including texture management, player control, shader programs, and scene rendering.
         """
-        # Initialize essential engine data.
+        # Create core engine components
         self.texture = Textures(self)
         self.player = Player(self)
         self.shader_program = ShaderProgram(self)
@@ -107,7 +108,7 @@ class VoxelEngine:
 
         Handles window close events and keyboard input. Checks for quit conditions including window close button and ESC key press.
         """
-        # Discontinue the engine from running if the user quits or hits certain keys.
+        # Stop engine if user quits or presses ESC
         for event in pg.event.get():
             if (event.type == pg.QUIT) or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                 self.is_running = False
@@ -121,13 +122,13 @@ class VoxelEngine:
 
         Cleans up resources and gracefully exits when done.
         """
-        # Execute the conditionally continuous rendering loop.
+        # Run the main rendering loop
         while self.is_running:
             self.handle_events()
             self.update()
             self.render()
 
-        # Stop running if the user does something that stops self.is_running
+        # Clean up and exit
         pg.quit()
         sys.exit()
 

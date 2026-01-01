@@ -21,7 +21,7 @@ WIN_RES = glm.vec2(1600, 900)
 MAX_RAY_DISTANCE = 6
 
 # Chunk settings
-CHUNK_SIZE = 32
+CHUNK_SIZE = 48
 """Size of each chunk in voxels along one dimension. Chunks are cubic."""
 HORIZONTAL_CHUNK_SIZE = CHUNK_SIZE // 2
 """Half of CHUNK_SIZE, used for center calculations."""
@@ -29,9 +29,10 @@ CHUNK_AREA = CHUNK_SIZE * CHUNK_SIZE
 """Area of a chunk in voxels (CHUNK_SIZE squared)."""
 CHUNK_VOLUME = CHUNK_AREA * CHUNK_SIZE
 """Volume of a chunk in voxels (CHUNK_SIZE cubed)."""
+CHUNK_SPHERE_RADIUS = HORIZONTAL_CHUNK_SIZE * math.sqrt(3)
 
 # World settings
-WORLD_WIDTH, WORLD_HEIGHT = 10, 3
+WORLD_WIDTH, WORLD_HEIGHT = 20, 2
 """World dimensions in chunks (width, height)."""
 WORLD_DEPTH = WORLD_WIDTH
 """World depth in chunks, equal to width for square worlds."""

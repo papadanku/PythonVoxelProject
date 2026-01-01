@@ -54,10 +54,11 @@ class VoxelHandler:
             # Place voxel if the adjacent position is empty
             if not result[0]:
 
-                # Use traditional assignment to avoid Python version compatibility issues
+                # Extract voxel data from result
                 voxel_index = result[1]
                 chunk = result[3]
 
+                # Add the new voxel
                 chunk.voxels[voxel_index] = self.new_voxel_id
                 chunk.mesh.rebuild()
 
@@ -90,8 +91,7 @@ class VoxelHandler:
         lx, ly, lz = self.voxel_local_position
         wx, wy, wz = self.voxel_world_position
 
-        # Determine if the voxel is at the current chunk's border
-        # Determine which adjacent chunk to rebuild
+        # Check if voxel is at chunk borders and rebuild adjacent chunks
         if lx == 0:
             self.rebuild_adjacent_chunk((wx - 1, wy, wz))
         elif lx == CHUNK_SIZE - 1:

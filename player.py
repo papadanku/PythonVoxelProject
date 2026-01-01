@@ -37,7 +37,7 @@ class Player(Camera):
         super().update()
 
     def handle_event(self, event):
-        # Adding and removing voxels with clicks
+        # Handle voxel manipulation with mouse clicks
         if event.type == pg.MOUSEBUTTONDOWN:
             voxel_handler = self.engine.scene.world.voxel_handler
             if event.button == 1:
