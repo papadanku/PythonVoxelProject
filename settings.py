@@ -16,6 +16,8 @@ import numpy as np
 # Display settings
 WIN_RES = glm.vec2(1600, 900)
 """Window resolution in pixels (width, height). Defines the size of the game window."""
+FPS = 60
+"""Target frames per second."""
 
 # Ray-casting settings
 MAX_RAY_DISTANCE = 6
